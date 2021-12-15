@@ -1,13 +1,15 @@
 ---
 - hosts: webserver
   become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.4.3
   tasks:
     - name: install apache2
       apt:
         name:
           - apache2
           - libapache2-mod-wsgi
-          - python-pip
+          - python3-pip
           - python-virtualenv
         state: present
         update_cache: yes
@@ -25,6 +27,38 @@
 
     - name: copy apache virtual host config
       copy: src=demo/demo.conf dest=/etc/apache2/sites-available mode=0755
+      notify: restart apache2
+    
+    - name: verify path demo
+      stat:
+        path: /var/www/demo
+      register: r
+    - debug:
+        msg: "Path exists"
+      when: r.stat.exists
+    - debug: 
+        msg: "Path not found"
+      when: r.stat.exists == False  
+    
+    - name: verify all files in demo
+      find: 
+        paths: /var/www/demo/app
+        file_type: file
+      register: res
+    - debug: 
+        msg: "{{ [item.path] }}"
+      with_items: "{{ res.files }}"
+    
+    - name: verify pip version
+      command: "pip --version"
+      register: p
+    - debug:
+        msg: "{{ p.stdout }}"
+ 
+    - name: setup python virtualenv
+      pip:
+        requirements: /var/www/demo/app/requirements.txt
+        virtualenv: /var/www/demo/.venv
       notify: restart apache2
 
   handlers:
