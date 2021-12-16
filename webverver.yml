@@ -1,8 +1,6 @@
 ---
 - hosts: webserver
   become: yes
-  vars:
-    ansible_python_interpreter: /usr/bin/python3.4.3
   tasks:
     - name: install apache2
       apt:
@@ -10,7 +8,7 @@
           - apache2
           - libapache2-mod-wsgi
           - python3-pip
-          - python-virtualenv
+          - python3-virtualenv
         state: present
         update_cache: yes
 
@@ -36,9 +34,6 @@
     - debug:
         msg: "Path exists"
       when: r.stat.exists
-    - debug: 
-        msg: "Path not found"
-      when: r.stat.exists == False  
     
     - name: verify all files in demo
       find: 
@@ -59,6 +54,14 @@
       pip:
         requirements: /var/www/demo/app/requirements.txt
         virtualenv: /var/www/demo/.venv
+      notify: restart apache2
+    
+    - name: de-activate default apache site
+      file: path=/etc/apache2/sites-enabled/000-default.conf state=absent
+      notify: restart apache2
+    
+    - name: activate demo apache site
+      file: src=/etc/apache2/sites-available/demo.conf dest=/etc/apache2/sites-enabled/demo.conf state=link
       notify: restart apache2
 
   handlers:

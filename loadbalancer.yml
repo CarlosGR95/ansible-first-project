@@ -1,5 +1,5 @@
 ---
-- hosts: loadbalancer-service
+- hosts: loadbalancer
   become: yes 
   tasks:
     - name: install nginx
