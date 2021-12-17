@@ -6,5 +6,6 @@
       apt: 
         name:
           - curl
+          - python3-httplib2  
         state: present 
         update_cache: yes
